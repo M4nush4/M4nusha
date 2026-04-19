@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M4nusha</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0812;
+      --bg2: #110e1a;
+      --bg3: #18132a;
+      --accent: #9b6dff;
+      --accent2: #c084fc;
+      --text: #e8dff8;
+      --muted: #7a6b99;
+      --border: rgba(155, 109, 255, 0.2);
+      --card: rgba(155, 109, 255, 0.07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grain */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* Glow orb */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(ellipse, rgba(120, 60, 220, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* PAGE SYSTEM */
+    .page { display: none; animation: fadeIn 0.25s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* HOME */
+    #home { padding: 80px 0 60px; text-align: center; }
+
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1.5px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent2);
+      margin: 0 auto 24px;
+      box-shadow: 0 0 40px rgba(155, 109, 255, 0.25);
+    }
+
+    .site-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 8vw, 56px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+    }
+
+    .site-sub {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    /* MAIN NAV */
+    .main-nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .main-nav-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 12px;
+      cursor: pointer;
+      color: var(--text);
+      text-align: center;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .main-nav-btn:hover {
+      background: rgba(155, 109, 255, 0.15);
+      border-color: rgba(155, 109, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .main-nav-btn .nav-icon { font-size: 20px; }
+    .main-nav-btn .nav-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .main-nav-btn .nav-sub { font-size: 11px; color: var(--muted); }
+
+    /* SOCIAL LINKS */
+    .socials {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .social-link {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .social-link:hover {
+      color: var(--accent2);
+      border-color: rgba(155, 109, 255, 0.5);
+      background: var(--card);
+    }
+
+    /* INNER PAGES */
+    .inner-page { padding: 60px 0 80px; }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 40px;
+      padding: 0;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--accent2); }
+    .back-btn::before { content: '←'; }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(28px, 6vw, 44px);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 32px;
+      letter-spacing: -0.5px;
+    }
+
+    /* SECTION GRID */
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .section-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      cursor: pointer;
+      color: var(--text);
+      text-align: left;
+      transition: all 0.2s;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-btn:hover {
+      background: rgba(155, 109, 255, 0.15);
+      border-color: rgba(155, 109, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* CONTENT CARD */
+    .content-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+    }
+
+    .content-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .content-card p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.9;
+      opacity: 0.85;
+    }
+
+    /* LINKS ROW */
+    .links-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    /* BIAS PAGE */
+    .ult-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 28px;
+      margin-bottom: 12px;
+    }
+
+    .ult-label {
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .ult-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .bias-list {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-top: 16px;
+    }
+
+    .bias-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(155, 109, 255, 0.08);
+      font-size: 13px;
+    }
+
+    .bias-row:last-child { border-bottom: none; }
+    .bias-row .group { color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+    .bias-row .name { color: var(--text); }
+
+    /* TEAMS */
+    .teams-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .team-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .team-card .team-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .team-card .team-sport {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* MEDIA */
+    .media-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 10px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .media-link:hover {
+      background: rgba(155, 109, 255, 0.15);
+      border-color: rgba(155, 109, 255, 0.5);
+      transform: translateX(4px);
+    }
+
+    .media-link .media-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .media-link .media-arrow { color: var(--muted); font-size: 18px; }
+
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 500px) {
+      .main-nav { grid-template-columns: 1fr; }
+      .section-grid { grid-template-columns: 1fr; }
+      .teams-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="page active">
+  <div class="container">
+    <div style="padding: 80px 0 60px; text-align: center;">
+      <div class="avatar">M</div>
+      <h1 class="site-title">M4nusha</h1>
+      <p class="site-sub">Manusha or Ryan &nbsp;·&nbsp; He/Him</p>
+
+      <div class="main-nav">
+        <button class="main-nav-btn" onclick="show('music')">
+          <span class="nav-icon">♪</span>
+          <span class="nav-label">Music</span>
+          <span class="nav-sub">Favorite Artists</span>
+        </button>
+        <button class="main-nav-btn" onclick="show('teams')">
+          <span class="nav-icon">◎</span>
+          <span class="nav-label">Teams</span>
+          <span class="nav-sub">Favorite Teams</span>
+        </button>
+        <button class="main-nav-btn" onclick="show('media')">
+          <span class="nav-icon">▶</span>
+          <span class="nav-label">Media</span>
+          <span class="nav-sub">Favorite Media</span>
+        </button>
+      </div>
+
+      <div class="socials">
+        <a class="social-link" href="https://x.com/M4nusha" target="_blank">𝕏 Twitter</a>
+        <a class="social-link" href="https://open.spotify.com/user/periesryan?si=d39cdf4b11cc45f4" target="_blank">Spotify</a>
+        <a class="social-link" href="https://www.last.fm/user/M4nusha" target="_blank">Last.fm</a>
+        <a class="social-link" href="https://www.albumoftheyear.org/user/m4nusha/" target="_blank">AOTY</a>
+        <a class="social-link" href="https://steamcommunity.com/profiles/76561198146879741/" target="_blank">Steam</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MUSIC -->
+<div id="music" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('home')">Back</button>
+      <h2 class="page-title">Music</h2>
+      <div class="section-grid">
+        <button class="section-btn" onclick="show('rap')">🎤 Rap</button>
+        <button class="section-btn" onclick="show('kpop')">✦ Kpop</button>
+        <button class="section-btn" onclick="show('rnb')">♫ R&amp;B</button>
+        <button class="section-btn" onclick="show('metal')">♦ Metal</button>
+      </div>
+      <div class="links-row">
+        <a class="social-link" href="https://open.spotify.com/user/periesryan?si=d34cd09b34f64fa9" target="_blank">Spotify</a>
+        <a class="social-link" href="https://www.albumoftheyear.org/user/m4nusha/" target="_blank">AOTY</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RAP -->
+<div id="rap" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('music')">Music</button>
+      <h2 class="page-title">Rap</h2>
+      <div class="content-card">
+        <h3>Favorite Artists</h3>
+        <p>JID, Isaiah Rashad, Kenny Mason, MIKE, Mavi, Denzel Curry, Lancey Foux, Smino, Vince Staples, Redveil, Saba</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RNB -->
+<div id="rnb" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('music')">Music</button>
+      <h2 class="page-title">R&amp;B</h2>
+      <div class="content-card">
+        <h3>Favorite Artists</h3>
+        <p style="opacity:0.4; font-style:italic;">Coming soon...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPOP -->
+<div id="kpop" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('music')">Music</button>
+      <h2 class="page-title">Kpop</h2>
+      <div class="content-card" style="margin-bottom: 16px;">
+        <h3>ULTs</h3>
+      </div>
+      <button class="section-btn" style="width:100%;" onclick="show('bias')">⟶ My Biases</button>
+    </div>
+  </div>
+</div>
+
+<!-- BIASES -->
+<div id="bias" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('kpop')">Kpop</button>
+      <h2 class="page-title">Biases</h2>
+
+      <div class="ult-item">
+        <div class="ult-label">ULT</div>
+        <div class="ult-name">Seulgi — Red Velvet</div>
+      </div>
+      <div class="ult-item">
+        <div class="ult-label">ULT</div>
+        <div class="ult-name">Doyoung — NCT</div>
+      </div>
+
+      <div class="bias-list">
+        <div class="bias-row"><span class="name">Haechan</span><span class="group">NCT Dream</span></div>
+        <div class="bias-row"><span class="name">Xiaojun</span><span class="group">WayV</span></div>
+        <div class="bias-row"><span class="name">Riku</span><span class="group">Wish</span></div>
+        <div class="bias-row"><span class="name">Choerry</span><span class="group">Loona</span></div>
+        <div class="bias-row"><span class="name">Haseul</span><span class="group">ARTMS</span></div>
+        <div class="bias-row"><span class="name">Hyeju</span><span class="group">Looble</span></div>
+        <div class="bias-row"><span class="name">Suhyeon & Haram</span><span class="group">Billlie</span></div>
+        <div class="bias-row"><span class="name">Kai & Baekhyun</span><span class="group">EXO</span></div>
+        <div class="bias-row"><span class="name">Yuju</span><span class="group">GFRIEND</span></div>
+        <div class="bias-row"><span class="name">Jonghyun</span><span class="group">SHINee</span></div>
+        <div class="bias-row"><span class="name">Bae</span><span class="group">NMIXX</span></div>
+        <div class="bias-row"><span class="name">Luna</span><span class="group">f(x)</span></div>
+        <div class="bias-row"><span class="name">Sio</span><span class="group">Ablume</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- METAL -->
+<div id="metal" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('music')">Music</button>
+      <h2 class="page-title">Metal</h2>
+      <div class="content-card">
+        <h3>Favorite Bands</h3>
+        <p>Opeth, Between the Buried and Me, Protest the Hero, Periphery, Animals As Leaders, Death, Gojira, Caligula's Horse, Polyphia</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAMS -->
+<div id="teams" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('home')">Back</button>
+      <h2 class="page-title">Favorite Teams</h2>
+      <div class="teams-grid">
+        <div class="team-card">
+          <div class="team-name">Eagles</div>
+          <div class="team-sport">NFL</div>
+        </div>
+        <div class="team-card">
+          <div class="team-name">Sixers</div>
+          <div class="team-sport">NBA</div>
+        </div>
+        <div class="team-card">
+          <div class="team-name">MUFC</div>
+          <div class="team-sport">Football</div>
+        </div>
+        <div class="team-card">
+          <div class="team-name">Golden Knights</div>
+          <div class="team-sport">NHL</div>
+        </div>
+        <div class="team-card">
+          <div class="team-name">Aces</div>
+          <div class="team-sport">WNBA</div>
+        </div>
+        <div class="team-card">
+          <div class="team-name">RB F1</div>
+          <div class="team-sport">Formula 1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MEDIA -->
+<div id="media" class="page">
+  <div class="container">
+    <div class="inner-page">
+      <button class="back-btn" onclick="show('home')">Back</button>
+      <h2 class="page-title">Media</h2>
+      <a class="media-link" href="https://letterboxd.com/M4nusha/" target="_blank">
+        <span class="media-name">Letterboxd</span>
+        <span class="media-arrow">→</span>
+      </a>
+      <a class="media-link" href="https://myanimelist.net/profile/M4nusha" target="_blank">
+        <span class="media-name">MyAnimeList</span>
+        <span class="media-arrow">→</span>
+      </a>
+      <a class="media-link" href="https://mydramalist.com/dramalist/M4nusha" target="_blank">
+        <span class="media-name">MyDramaList</span>
+        <span class="media-arrow">→</span>
+      </a>
+      <a class="media-link" href="https://steamcommunity.com/profiles/76561198146879741/" target="_blank">
+        <span class="media-name">Steam</span>
+        <span class="media-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
