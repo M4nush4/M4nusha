@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M4nusha — Rap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #9b6dff;
+      --accent2: #c084fc;
+      --text: #f0e8ff;
+      --muted: rgba(240,232,255,0.45);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'DM Mono', monospace;
+      background: #0b0812;
+      color: var(--text);
+    }
+
+    /* INTRO OVERLAY */
+    #intro {
+      position: fixed;
+      inset: 0;
+      background: #0b0812;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      cursor: pointer;
+      transition: opacity 0.6s ease;
+    }
+    #intro.hidden { opacity: 0; pointer-events: none; }
+
+    .intro-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 7vw, 68px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      color: var(--text);
+    }
+    .intro-sub {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .intro-btn {
+      margin-top: 8px;
+      background: rgba(155,109,255,0.1);
+      border: 1px solid rgba(155,109,255,0.35);
+      border-radius: 40px;
+      padding: 14px 36px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: var(--accent2);
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .intro-btn:hover { background: rgba(155,109,255,0.22); border-color: rgba(155,109,255,0.6); }
+
+    .pulse-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(155,109,255,0.35);
+      animation: pulse 2s infinite;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.09); opacity: 0.55; }
+    }
+
+    /* SCROLL CONTAINER */
+    .scroll-container {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+    }
+    .scroll-container::-webkit-scrollbar { display: none; }
+
+    /* SLIDES */
+    .slide {
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    .slide-bg {
+      position: absolute; inset: 0;
+      background-size: cover;
+      background-position: center top;
+      filter: brightness(0.28) saturate(0.7);
+      transform: scale(1.06);
+      transition: transform 0.9s ease, filter 0.9s ease;
+    }
+    .slide.active .slide-bg { transform: scale(1); filter: brightness(0.36) saturate(0.8); }
+
+    .slide::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, rgba(11,8,18,0.94) 0%, rgba(11,8,18,0.55) 55%, rgba(11,8,18,0.1) 100%);
+      pointer-events: none;
+    }
+
+    .slide-content {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1100px;
+      padding: 0 64px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 60px;
+    }
+
+    /* ANIMATED ELEMENTS */
+    .slide-index, .slide-name, .slide-desc, .slide-tags, .slide-player-area {
+      opacity: 0; transform: translateY(18px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .slide-index       { transition-delay: 0.08s; }
+    .slide-name        { transition-delay: 0.18s; }
+    .slide-desc        { transition-delay: 0.28s; }
+    .slide-tags        { transition-delay: 0.34s; }
+    .slide-player-area { transition-delay: 0.40s; }
+
+    .slide.active .slide-index,
+    .slide.active .slide-name,
+    .slide.active .slide-desc,
+    .slide.active .slide-tags,
+    .slide.active .slide-player-area { opacity: 1; transform: translateY(0); }
+
+    .slide-index {
+      font-size: 11px; letter-spacing: 3px;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 16px;
+    }
+    .slide-name {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(42px, 6vw, 82px);
+      font-weight: 800; line-height: 0.92;
+      letter-spacing: -2px; color: var(--text); margin-bottom: 22px;
+    }
+    .slide-desc {
+      font-size: 13px; color: var(--muted);
+      line-height: 1.85; max-width: 380px; margin-bottom: 24px;
+    }
+    .slide-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      background: rgba(155,109,255,0.1);
+      border: 1px solid rgba(155,109,255,0.22);
+      border-radius: 20px; padding: 5px 14px;
+      font-size: 11px; color: var(--accent2); letter-spacing: 1px;
+    }
+
+    /* PLAYER AREA */
+    .slide-player-area {
+      display: flex; flex-direction: column;
+      align-items: flex-start; gap: 16px;
+    }
+
+    /* EQ bars */
+    .now-playing { display: flex; align-items: center; gap: 10px; }
+    .bars { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
+    .bar {
+      width: 3px; background: var(--accent2); border-radius: 2px;
+      transform-origin: bottom;
+      animation: eq 0.8s infinite ease-in-out;
+    }
+    .bar:nth-child(1) { animation-delay: 0s;    height: 55%; }
+    .bar:nth-child(2) { animation-delay: 0.15s; height: 100%; }
+    .bar:nth-child(3) { animation-delay: 0.30s; height: 40%; }
+    .bar:nth-child(4) { animation-delay: 0.45s; height: 75%; }
+    @keyframes eq {
+      0%,100% { transform: scaleY(0.35); }
+      50%      { transform: scaleY(1); }
+    }
+    /* Pause bars when slide not active */
+    .slide:not(.active) .bar { animation-play-state: paused; }
+
+    .now-playing-text {
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+    }
+
+    /* TRACK INFO */
+    .track-info {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .track-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px; font-weight: 700; color: var(--text);
+    }
+    .track-meta { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+    /* VOLUME SLIDER */
+    .volume-row {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+    }
+    .vol-icon { font-size: 13px; color: var(--muted); }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 120px; height: 3px;
+      background: rgba(155,109,255,0.25);
+      border-radius: 2px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--accent2);
+      cursor: pointer;
+    }
+    .vol-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; min-width: 28px; }
+
+    /* SHOW EMBED BUTTON */
+    .show-player-btn {
+      background: rgba(155,109,255,0.1);
+      border: 1px solid rgba(155,109,255,0.28);
+      border-radius: 8px; padding: 10px 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px; letter-spacing: 2px;
+      color: var(--accent2); text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .show-player-btn:hover { background: rgba(155,109,255,0.2); border-color: rgba(155,109,255,0.5); }
+    .btn-arrow { transition: transform 0.25s; font-style: normal; }
+    .show-player-btn.open .btn-arrow { transform: rotate(180deg); }
+
+    .embed-wrapper {
+      width: 100%; max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease; border-radius: 14px;
+    }
+    .embed-wrapper.open { max-height: 160px; }
+    .spotify-embed { width: 100%; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 56px rgba(0,0,0,0.55); }
+
+    /* DOTS */
+    .dots {
+      position: fixed; right: 28px; top: 50%;
+      transform: translateY(-50%); z-index: 100;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(240,232,255,0.2);
+      cursor: pointer; transition: all 0.3s;
+    }
+    .dot.active { background: var(--accent2); transform: scale(1.5); }
+
+    /* SCROLL HINT */
+    .scroll-hint {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%); z-index: 100;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      transition: opacity 0.5s; pointer-events: none;
+    }
+    .scroll-hint span { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .scroll-arrow {
+      width: 18px; height: 18px;
+      border-right: 1.5px solid var(--muted);
+      border-bottom: 1.5px solid var(--muted);
+      transform: rotate(45deg);
+      animation: bounce 1.6s infinite;
+    }
+    @keyframes bounce {
+      0%,100% { transform: rotate(45deg) translateY(0); }
+      50%      { transform: rotate(45deg) translateY(5px); }
+    }
+
+    /* NAV */
+    .back-link {
+      position: fixed; top: 28px; left: 36px; z-index: 100;
+      font-size: 11px; letter-spacing: 2px;
+      color: var(--muted); text-decoration: none;
+      text-transform: uppercase; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent2); }
+
+    .genre-label {
+      position: fixed; top: 28px; right: 56px; z-index: 100;
+      font-family: 'Syne', sans-serif; font-size: 12px;
+      font-weight: 700; letter-spacing: 4px;
+      color: var(--accent); text-transform: uppercase;
+    }
+
+    /* MOBILE */
+    @media (max-width: 700px) {
+      .slide-content { grid-template-columns: 1fr; padding: 80px 28px 40px; gap: 24px; }
+      .slide::after { background: linear-gradient(to bottom, rgba(11,8,18,0.4) 0%, rgba(11,8,18,0.96) 52%); }
+      .slide-name { font-size: 48px; }
+      .genre-label { display: none; }
+      .dots { right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="pulse-ring">♪</div>
+  <div class="intro-title">M4nusha</div>
+  <div class="intro-sub">Rap</div>
+  <button class="intro-btn" id="introBtn">Tap to enable audio</button>
+</div>
+
+<a class="back-link" href="index.html">← Back</a>
+<div class="genre-label">Rap</div>
+<div class="dots" id="dots"></div>
+
+<div class="scroll-hint" id="scrollHint">
+  <span>Scroll</span>
+  <div class="scroll-arrow"></div>
+</div>
+
+<div class="scroll-container" id="scroller">
+
+  <!-- ─────────────────────────────────────────
+       ARTIST SLIDES
+       To add a new artist:
+       1. Copy a slide block
+       2. Update data-index (increment by 1)
+       3. Update data-src to your mp3 path e.g. "audio/kenny-mason.mp3"
+       4. Update data-track-id if you still want the Spotify embed
+       5. Update slide-index counter, name, desc, tags, bg image
+  ───────────────────────────────────────── -->
+
+  <!-- JID -->
+  <div class="slide" data-index="0" data-src="jid.mp3" data-track-id="6ZGoFntcQUWTPGGQPQmecY">
+    <div class="slide-bg" style="background-image: url('https://i.scdn.co/image/ab6761610000e5eb5ce82f7b2f7f2d0b8c2b8d3f');"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">01 / 02</div>
+        <div class="slide-name">JID</div>
+        <div class="slide-desc">Atlanta-bred lyricist known for rapid-fire flows and intricate wordplay. One of the most technically gifted MCs of his generation.</div>
+        <div class="slide-tags">
+          <span class="tag">Atlanta</span>
+          <span class="tag">Dreamville</span>
+          <span class="tag">Lyricist</span>
+        </div>
+      </div>
+      <div class="slide-player-area">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="now-playing-text">Now playing</span>
+        </div>
+        <div class="track-info">
+          <div class="track-name">Kody Blu 31</div>
+          <div class="track-meta">JID &nbsp;·&nbsp; The Forever Story</div>
+        </div>
+        <div class="volume-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVolume(this.value)" />
+          <span class="vol-label" id="volLabel">40%</span>
+        </div>
+        <button class="show-player-btn" onclick="toggleEmbed(this)">
+          <span>Show on Spotify</span><em class="btn-arrow">↓</em>
+        </button>
+        <div class="embed-wrapper">
+          <div class="spotify-embed">
+            <iframe src="https://open.spotify.com/embed/track/6ZGoFntcQUWTPGGQPQmecY?utm_source=generator&theme=0"
+              width="100%" height="152" frameborder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISAIAH RASHAD -->
+  <div class="slide" data-index="1" data-src="isaiah-rashad.mp3" data-track-id="4KmNLSvaKU0zoJhIptn961">
+    <div class="slide-bg" style="background-image: url('https://i.scdn.co/image/ab6761610000e5eb3f83d23e2a0cff27cc5ae7b8');"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">02 / 02</div>
+        <div class="slide-name">Isaiah<br>Rashad</div>
+        <div class="slide-desc">Chattanooga's finest. Laidback flows over jazzy, soulful production. A cult favorite whose music rewards repeated listening.</div>
+        <div class="slide-tags">
+          <span class="tag">Chattanooga</span>
+          <span class="tag">TDE</span>
+          <span class="tag">Neo-Soul Rap</span>
+        </div>
+      </div>
+      <div class="slide-player-area">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="now-playing-text">Now playing</span>
+        </div>
+        <div class="track-info">
+          <div class="track-name"><!-- song name --></div>
+          <div class="track-meta">Isaiah Rashad</div>
+        </div>
+        <div class="volume-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVolume(this.value)" />
+          <span class="vol-label" id="volLabel">40%</span>
+        </div>
+        <button class="show-player-btn" onclick="toggleEmbed(this)">
+          <span>Show on Spotify</span><em class="btn-arrow">↓</em>
+        </button>
+        <div class="embed-wrapper">
+          <div class="spotify-embed">
+            <iframe src="https://open.spotify.com/embed/track/4KmNLSvaKU0zoJhIptn961?utm_source=generator&theme=0"
+              width="100%" height="152" frameborder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const slides     = document.querySelectorAll('.slide');
+  const dotsWrap   = document.getElementById('dots');
+  const scrollHint = document.getElementById('scrollHint');
+  const intro      = document.getElementById('intro');
+  const introBtn   = document.getElementById('introBtn');
+
+  let audioUnlocked = false;
+  let currentAudio  = null;
+  let globalVolume  = 0.40; // 40% default
+
+  // Build nav dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth' });
+    dotsWrap.appendChild(d);
+  });
+  const dots = document.querySelectorAll('.dot');
+
+  // Preload all audio objects
+  const audioMap = {};
+  slides.forEach(slide => {
+    const src = slide.dataset.src;
+    if (src) {
+      const audio = new Audio(src);
+      audio.volume = globalVolume;
+      audio.loop   = true;
+      audio.preload = 'auto';
+      audioMap[slide.dataset.index] = audio;
+    }
+  });
+
+  // Unlock on intro tap
+  function unlockAudio() {
+    audioUnlocked = true;
+    intro.classList.add('hidden');
+    playSlide(0);
+  }
+  introBtn.addEventListener('click', e => { e.stopPropagation(); unlockAudio(); });
+  intro.addEventListener('click', unlockAudio);
+
+  // Play a slide's audio, stop all others
+  function playSlide(idx) {
+    Object.entries(audioMap).forEach(([key, audio]) => {
+      if (key !== String(idx)) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+    const audio = audioMap[idx];
+    if (audio) {
+      audio.volume = globalVolume;
+      audio.play().catch(() => {}); // silently handle any remaining block
+    }
+    currentAudio = audio || null;
+  }
+
+  // Volume control — syncs all audio objects
+  function setVolume(val) {
+    globalVolume = val / 100;
+    Object.values(audioMap).forEach(a => a.volume = globalVolume);
+    // Update all vol labels
+    document.querySelectorAll('#volLabel').forEach(el => el.textContent = val + '%');
+  }
+
+  // Activate slide: animate, play audio, update dots
+  function activateSlide(idx) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    scrollHint.style.opacity = idx === 0 ? '1' : '0';
+    if (audioUnlocked) playSlide(idx);
+  }
+
+  // Toggle Spotify embed open/close
+  function toggleEmbed(btn) {
+    const wrapper = btn.nextElementSibling;
+    const isOpen  = wrapper.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    btn.querySelector('span').textContent = isOpen ? 'Hide' : 'Show on Spotify';
+  }
+
+  // Intersection observer for scroll snapping
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) activateSlide(+entry.target.dataset.index);
+    });
+  }, { threshold: 0.6 });
+
+  slides.forEach(s => observer.observe(s));
+  slides[0].classList.add('active');
+</script>
+
+</body>
+</html>
