@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M4nusha — Rap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #9b6dff;
+      --accent2: #c084fc;
+      --text: #f0e8ff;
+      --muted: rgba(240,232,255,0.45);
+    }
+
+    html, body { height: 100%; overflow: hidden; background: #0b0812; font-family: 'DM Mono', monospace; }
+
+    /* INTRO */
+    #intro {
+      position: fixed; inset: 0; background: #0b0812; z-index: 999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+      cursor: pointer; transition: opacity 0.6s ease;
+    }
+    #intro.hidden { opacity: 0; pointer-events: none; }
+    .intro-title { font-family: 'Syne', sans-serif; font-size: clamp(36px, 7vw, 68px); font-weight: 800; letter-spacing: -2px; color: var(--text); }
+    .intro-sub { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+    .intro-btn {
+      margin-top: 8px; background: rgba(155,109,255,0.1); border: 1px solid rgba(155,109,255,0.35);
+      border-radius: 40px; padding: 14px 36px; font-family: 'DM Mono', monospace;
+      font-size: 12px; letter-spacing: 3px; color: var(--accent2); text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+    }
+    .intro-btn:hover { background: rgba(155,109,255,0.22); }
+    .pulse-ring {
+      width: 80px; height: 80px; border-radius: 50%; border: 1.5px solid rgba(155,109,255,0.35);
+      animation: pulse 2s infinite; display: flex; align-items: center; justify-content: center; font-size: 28px;
+    }
+    @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.09); opacity: 0.55; } }
+
+    /* SCROLL */
+    .scroll-container { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+    .scroll-container::-webkit-scrollbar { display: none; }
+
+    /* SLIDE */
+    .slide {
+      height: 100vh; scroll-snap-align: start;
+      position: relative; display: flex; align-items: flex-end; overflow: hidden;
+    }
+
+    /* Full-bleed photo */
+    .slide-bg {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      /* TO SET PHOTO: replace the background-color below with:
+         background-image: url('images/ARTISTNAME.jpg');
+         and remove background-color */
+      background-color: #1a1030;
+      transition: transform 0.9s ease;
+      transform: scale(1.04);
+    }
+    .slide.active .slide-bg { transform: scale(1); }
+
+    /* Bottom gradient so text is readable */
+    .slide::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(11,8,18,0.92) 0%, rgba(11,8,18,0.3) 40%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* CONTENT — sits at the bottom */
+    .slide-content {
+      position: relative; z-index: 2;
+      width: 100%; padding: 0 56px 52px;
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 40px;
+    }
+
+    .slide-left { display: flex; flex-direction: column; gap: 6px; }
+
+    .slide-index {
+      font-size: 11px; letter-spacing: 3px; color: var(--accent);
+      text-transform: uppercase;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.45s ease 0.05s, transform 0.45s ease 0.05s;
+    }
+    .slide-name {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(44px, 7vw, 90px);
+      font-weight: 800; line-height: 0.9; letter-spacing: -2px; color: var(--text);
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.45s ease 0.12s, transform 0.45s ease 0.12s;
+    }
+
+    .slide.active .slide-index,
+    .slide.active .slide-name { opacity: 1; transform: translateY(0); }
+
+    /* AUDIO CONTROLS */
+    .audio-controls {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 180px;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.45s ease 0.2s, transform 0.45s ease 0.2s;
+    }
+    .slide.active .audio-controls { opacity: 1; transform: translateY(0); }
+
+    /* EQ bars */
+    .now-playing { display: flex; align-items: center; gap: 8px; }
+    .bars { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
+    .bar { width: 3px; background: var(--accent2); border-radius: 2px; transform-origin: bottom; animation: eq 0.8s infinite ease-in-out; }
+    .bar:nth-child(1) { animation-delay: 0s;    height: 55%; }
+    .bar:nth-child(2) { animation-delay: 0.15s; height: 100%; }
+    .bar:nth-child(3) { animation-delay: 0.30s; height: 40%; }
+    .bar:nth-child(4) { animation-delay: 0.45s; height: 75%; }
+    @keyframes eq { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+    .slide:not(.active) .bar { animation-play-state: paused; }
+    .np-text { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+    /* Volume row */
+    .vol-row { display: flex; align-items: center; gap: 8px; }
+    .vol-icon { font-size: 12px; color: var(--muted); }
+    input[type=range] {
+      -webkit-appearance: none; width: 110px; height: 3px;
+      background: rgba(155,109,255,0.25); border-radius: 2px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px;
+      border-radius: 50%; background: var(--accent2); cursor: pointer;
+    }
+    .vol-pct { font-size: 10px; color: var(--muted); min-width: 30px; text-align: right; }
+
+    /* DOTS */
+    .dots {
+      position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+      z-index: 100; display: flex; flex-direction: column; gap: 10px;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(240,232,255,0.2); cursor: pointer; transition: all 0.3s; }
+    .dot.active { background: var(--accent2); transform: scale(1.5); }
+
+    /* SCROLL HINT */
+    .scroll-hint {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 100; display: flex; flex-direction: column; align-items: center; gap: 5px;
+      pointer-events: none; transition: opacity 0.4s;
+    }
+    .scroll-hint span { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .scroll-arrow { width: 16px; height: 16px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg); animation: bounce 1.6s infinite; }
+    @keyframes bounce { 0%,100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(4px); } }
+
+    /* NAV */
+    .back-link {
+      position: fixed; top: 24px; left: 32px; z-index: 100;
+      font-size: 11px; letter-spacing: 2px; color: var(--muted);
+      text-decoration: none; text-transform: uppercase; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent2); }
+    .genre-label {
+      position: fixed; top: 24px; right: 48px; z-index: 100;
+      font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      letter-spacing: 4px; color: var(--accent); text-transform: uppercase;
+    }
+
+    /* MOBILE */
+    @media (max-width: 600px) {
+      .slide-content { flex-direction: column; align-items: flex-start; padding: 0 28px 40px; gap: 20px; }
+      .audio-controls { align-items: flex-start; }
+      .slide-name { font-size: 52px; }
+      .dots { right: 12px; }
+      .genre-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="pulse-ring">♪</div>
+  <div class="intro-title">Rap</div>
+  <div class="intro-sub">M4nusha</div>
+  <button class="intro-btn" id="introBtn">Tap to enable audio</button>
+</div>
+
+<a class="back-link" href="index.html">← Back</a>
+<div class="genre-label">Rap</div>
+<div class="dots" id="dots"></div>
+
+<div class="scroll-hint" id="scrollHint">
+  <span>Scroll</span>
+  <div class="scroll-arrow"></div>
+</div>
+
+<div class="scroll-container">
+
+  <!-- ═══════════════════════════════════════════
+       HOW TO ADD AN ARTIST:
+       1. Copy one slide block below
+       2. Set data-index (increment by 1)
+       3. Set data-src to your audio file e.g. "audio/kenny-mason.mp3"
+       4. On .slide-bg, set: background-image: url('images/artistname.jpg')
+       5. Update slide-index counter and slide-name
+       ═══════════════════════════════════════════ -->
+
+  <!-- JID -->
+  <div class="slide" data-index="0" data-src="audio/jid.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/jid.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">01 / 11</div>
+        <div class="slide-name">JID</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISAIAH RASHAD -->
+  <div class="slide" data-index="1" data-src="audio/isaiah-rashad.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/isaiah-rashad.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">02 / 11</div>
+        <div class="slide-name">Isaiah<br>Rashad</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KENNY MASON -->
+  <div class="slide" data-index="2" data-src="audio/kenny-mason.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/kenny-mason.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">03 / 11</div>
+        <div class="slide-name">Kenny<br>Mason</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIKE -->
+  <div class="slide" data-index="3" data-src="audio/mike.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/mike.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">04 / 11</div>
+        <div class="slide-name">MIKE</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAVI -->
+  <div class="slide" data-index="4" data-src="audio/mavi.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/mavi.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">05 / 11</div>
+        <div class="slide-name">Mavi</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DENZEL CURRY -->
+  <div class="slide" data-index="5" data-src="audio/denzel-curry.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/denzel-curry.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">06 / 11</div>
+        <div class="slide-name">Denzel<br>Curry</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LANCEY FOUX -->
+  <div class="slide" data-index="6" data-src="audio/lancey-foux.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/lancey-foux.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">07 / 11</div>
+        <div class="slide-name">Lancey<br>Foux</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMINO -->
+  <div class="slide" data-index="7" data-src="audio/smino.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/smino.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">08 / 11</div>
+        <div class="slide-name">Smino</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VINCE STAPLES -->
+  <div class="slide" data-index="8" data-src="audio/vince-staples.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/vince-staples.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">09 / 11</div>
+        <div class="slide-name">Vince<br>Staples</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REDVEIL -->
+  <div class="slide" data-index="9" data-src="audio/redveil.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/redveil.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">10 / 11</div>
+        <div class="slide-name">Redveil</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SABA -->
+  <div class="slide" data-index="10" data-src="audio/saba.mp3">
+    <div class="slide-bg" style="/* background-image: url('images/saba.jpg'); */"></div>
+    <div class="slide-content">
+      <div class="slide-left">
+        <div class="slide-index">11 / 11</div>
+        <div class="slide-name">Saba</div>
+      </div>
+      <div class="audio-controls">
+        <div class="now-playing">
+          <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <span class="np-text">Now playing</span>
+        </div>
+        <div class="vol-row">
+          <span class="vol-icon">♪</span>
+          <input type="range" min="0" max="100" value="40" oninput="setVol(this.value)">
+          <span class="vol-pct">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end scroll-container -->
+
+<script>
+  const slides     = document.querySelectorAll('.slide');
+  const dotsWrap   = document.getElementById('dots');
+  const scrollHint = document.getElementById('scrollHint');
+  const intro      = document.getElementById('intro');
+  const introBtn   = document.getElementById('introBtn');
+  let audioUnlocked = false;
+  let globalVolume  = 0.4;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth' });
+    dotsWrap.appendChild(d);
+  });
+  const dots = document.querySelectorAll('.dot');
+
+  // Preload audio
+  const audioMap = {};
+  slides.forEach(slide => {
+    const src = slide.dataset.src;
+    if (src) {
+      const a = new Audio(src);
+      a.volume = globalVolume;
+      a.loop   = true;
+      a.preload = 'auto';
+      audioMap[slide.dataset.index] = a;
+    }
+  });
+
+  // Unlock on intro tap
+  function unlock() {
+    audioUnlocked = true;
+    intro.classList.add('hidden');
+    playSlide(0);
+  }
+  introBtn.addEventListener('click', e => { e.stopPropagation(); unlock(); });
+  intro.addEventListener('click', unlock);
+
+  function playSlide(idx) {
+    Object.entries(audioMap).forEach(([k, a]) => {
+      if (k !== String(idx)) { a.pause(); a.currentTime = 0; }
+    });
+    const a = audioMap[idx];
+    if (a) { a.volume = globalVolume; a.play().catch(() => {}); }
+  }
+
+  function setVol(val) {
+    globalVolume = val / 100;
+    Object.values(audioMap).forEach(a => a.volume = globalVolume);
+    document.querySelectorAll('.vol-pct').forEach(el => el.textContent = val + '%');
+    document.querySelectorAll('input[type=range]').forEach(el => el.value = val);
+  }
+
+  function activateSlide(idx) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    scrollHint.style.opacity = idx === 0 ? '1' : '0';
+    if (audioUnlocked) playSlide(idx);
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) activateSlide(+e.target.dataset.index); });
+  }, { threshold: 0.6 });
+
+  slides.forEach(s => observer.observe(s));
+  slides[0].classList.add('active');
+</script>
+</body>
+</html>
